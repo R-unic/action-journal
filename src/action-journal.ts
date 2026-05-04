@@ -17,7 +17,8 @@ export class ActionJournal<State extends {}> {
 
   public constructor(
     mode: ActionJournalMode,
-    private readonly state: StateManager<State>
+    private readonly state: StateManager<State>,
+    private readonly historySize = 100
   ) {
     switch (mode) {
       case ActionJournalMode.Record: {
@@ -40,7 +41,18 @@ export class ActionJournal<State extends {}> {
   }
 
   public add(action: Action<State>): void {
-    this.actions.push(action);
+    const { actions } = this;
+    if (actions.size() >= this.historySize) {
+      const oldest = actions.shift();
+      if (oldest) {
+        const index = this.undoQueue.indexOf(oldest);
+        if (index !== -1) {
+          this.undoQueue.remove(index);
+        }
+      }
+    }
+
+    actions.push(action);
     this.added.Fire(action);
   }
 
