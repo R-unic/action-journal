@@ -6,7 +6,7 @@ const replicated = game.GetService("ReplicatedStorage");
 const tests = replicated.WaitForChild("Tests");
 const modules = replicated.WaitForChild("rbxts_include");
 
-instrument([replicated.WaitForChild("Library")], [tests, modules]);
+instrument([replicated], [tests, modules]);
 
 const testRunner = new TestRunner(tests);
 testRunner.run({ colors: true })
