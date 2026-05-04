@@ -6,9 +6,6 @@
       "Tests": {
         "$path": "out/tests/src"
       },
-      "Library": {
-        "$path": "../out"
-      },
       "rbxts_include": {
         "$path": "include",
         "node_modules": {
