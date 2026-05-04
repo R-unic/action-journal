@@ -11,7 +11,8 @@ export const enum ActionJournalMode {
 }
 
 export class ActionJournal<State extends {}> {
-  private readonly added = new Signal<(action: Action<State>) => void>;
+  public readonly added = new Signal<(action: Action<State>) => void>;
+
   private readonly actions: Action<State>[] = [];
   private readonly undoQueue: Action<State>[] = [];
 
