@@ -7,7 +7,7 @@
         "$path": "out/tests/src"
       },
       "Library": {
-        "$path": "out/src"
+        "$path": "../out"
       },
       "rbxts_include": {
         "$path": "include",
