@@ -1,7 +1,7 @@
 # @rbxts/action-journal
 
-[![CI Status](https://github.com/R-unic/action-journal/actions/workflows/test.yml/badge.svg)](https://github.com/R-unic/package-template/actions/workflows)
-[![Coverage Status](https://coveralls.io/repos/github/R-unic/action-journal/badge.svg?branch=master)](https://coveralls.io/github/R-unic/package-template)
+[![CI Status](https://github.com/R-unic/action-journal/actions/workflows/test.yml/badge.svg)](https://github.com/R-unic/action-journal/actions/workflows)
+[![Coverage Status](https://coveralls.io/repos/github/R-unic/action-journal/badge.svg?branch=master)](https://coveralls.io/github/R-unic/action-journal)
 
 A powerful state management library for Roblox with undo/redo capabilities, action recording, and time-travel debugging.
 
