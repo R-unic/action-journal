@@ -1,18 +1,11 @@
 import Signal from "@rbxts/lemon-signal";
 
-import type { ResolvedOrUnknown, ResolvePath } from "./structs";
+import type { ResolvePath, StateChangeInfo } from "./structs";
 
 const PATH_SEPARATOR = "/";
 
 function invalidPath(path: string): never {
   return error(`Invalid path: ${path}`, 2);
-}
-
-interface StateChangeInfo<State extends {}, Path extends string = string> {
-  readonly author: string;
-  readonly path: Path;
-  readonly oldValue: ResolvedOrUnknown<State, Path>;
-  readonly newValue: ResolvedOrUnknown<State, Path>;
 }
 
 export class StateManager<State extends {}> {

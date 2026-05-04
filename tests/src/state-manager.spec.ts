@@ -11,6 +11,16 @@ class StateManagerTest {
   }
 
   @Fact
+  public getState(): void {
+    const state = new StateManager(TEST_STATE);
+    const data = state.getState();
+    Assert.true("foo" in data);
+    Assert.true("bar" in data.foo);
+    Assert.true("baz" in data.foo.bar);
+    Assert.equal(69, data.foo.bar.baz);
+  }
+
+  @Fact
   public getPath(): void {
     const state = new StateManager(TEST_STATE);
     Assert.equal(69, state.getPath("foo/bar/baz"));
