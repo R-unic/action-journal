@@ -58,6 +58,30 @@ class ActionJournalTest {
   }
 
   @Fact
+  public cyclicHistory(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state, 2);
+    state.setPath("foo/bar/baz", 420, "test");
+    state.setPath("foo/bar/baz", 1337, "test");
+    state.setPath("foo/bar/baz", 67, "test");
+    Assert.equal(67, state.getPath("foo/bar/baz"));
+
+    const recorded = actions.getRecorded();
+    Assert.count(2, recorded);
+
+    const [firstChange, secondChange] = recorded;
+    Assert.true(firstChange.timestamp < secondChange.timestamp);
+    Assert.equal("test", firstChange.author);
+    Assert.equal("test", secondChange.author);
+    Assert.equal("foo/bar/baz", firstChange.target);
+    Assert.equal("foo/bar/baz", secondChange.target);
+    Assert.equal(420, firstChange.oldValue);
+    Assert.equal(1337, firstChange.newValue);
+    Assert.equal(1337, secondChange.oldValue);
+    Assert.equal(67, secondChange.newValue);
+  }
+
+  @Fact
   public undoAction_redoAction(): void {
     const state = new StateManager<TestState>(TEST_STATE);
     const actions = new ActionJournal(ActionJournalMode.Record, state);
