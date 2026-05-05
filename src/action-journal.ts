@@ -5,9 +5,17 @@ import type { Action } from "./structs";
 
 const { clamp } = math;
 
+export type ActionFilter<State extends {}, Path extends string = string> =
+  (action: Action<State, Path>) => boolean;
+
 export const enum ActionJournalMode {
   Record,
   Sync
+}
+
+export const enum ActionFilteringMode {
+  Any,
+  All
 }
 
 export class ActionJournal<State extends {}> {
@@ -15,6 +23,7 @@ export class ActionJournal<State extends {}> {
 
   private readonly actions: Action<State>[] = [];
   private readonly undoQueue: Action<State>[] = [];
+  private readonly filters = new Set<ActionFilter<State>>;
 
   public constructor(
     mode: ActionJournalMode,
@@ -41,7 +50,27 @@ export class ActionJournal<State extends {}> {
     }
   }
 
-  public add(action: Action<State>): void {
+  public addFilter(filter: ActionFilter<State>): void {
+    this.filters.add(filter);
+  }
+
+  public removeFilter(filter: ActionFilter<State>): void {
+    this.filters.delete(filter);
+  }
+
+  public isFiltered(action: Action<State>, filteringMode = ActionFilteringMode.Any): boolean {
+    const filterResults = [...this.filters].map(filter => filter(action));
+    switch (filteringMode) {
+      case ActionFilteringMode.Any:
+        return filterResults.some(v => v);
+      case ActionFilteringMode.All:
+        return filterResults.every(v => v);
+    }
+  }
+
+  public add(action: Action<State>, filteringMode?: ActionFilteringMode): void {
+    if (this.isFiltered(action, filteringMode)) return;
+
     const { actions } = this;
     if (actions.size() >= this.historySize) {
       const oldest = actions.shift();
