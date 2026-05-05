@@ -7,7 +7,7 @@ const tests = replicated.WaitForChild("Tests");
 const modules = replicated.WaitForChild("rbxts_include").WaitForChild("node_modules").WaitForChild("@rbxts");
 
 let libName = "action-journal";
-instrument([modules.WaitForChild(libName)]);
+instrument([modules.WaitForChild(libName).WaitForChild("out")]);
 
 const testRunner = new TestRunner(tests);
 testRunner.run({ colors: true })
