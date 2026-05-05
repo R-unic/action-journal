@@ -28,6 +28,7 @@ export class ActionJournal<State extends {}> {
   public constructor(
     mode: ActionJournalMode,
     private readonly state: StateManager<State>,
+    private readonly filteringMode = ActionFilteringMode.Any,
     private readonly historySize = 100
   ) {
     switch (mode) {
@@ -58,7 +59,7 @@ export class ActionJournal<State extends {}> {
     this.filters.delete(filter);
   }
 
-  public isFiltered(action: Action<State>, filteringMode = ActionFilteringMode.Any): boolean {
+  public isFiltered(action: Action<State>, filteringMode = this.filteringMode): boolean {
     const filterResults = [...this.filters].map(filter => filter(action));
     switch (filteringMode) {
       case ActionFilteringMode.Any:
@@ -68,7 +69,7 @@ export class ActionJournal<State extends {}> {
     }
   }
 
-  public add(action: Action<State>, filteringMode?: ActionFilteringMode): void {
+  public add(action: Action<State>, filteringMode = this.filteringMode): void {
     if (this.isFiltered(action, filteringMode)) return;
 
     const { actions } = this;

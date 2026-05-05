@@ -1,5 +1,5 @@
 import { Assert, Fact } from "@rbxts/runit";
-import { ActionJournalMode, ActionJournal, StateManager, type Action, ActionFilter } from "@rbxts/action-journal";
+import { ActionJournalMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
 
 const TEST_STATE = { foo: { bar: { baz: 69 } } };
 
@@ -77,7 +77,7 @@ class ActionJournalTest {
   @Fact
   public cyclicHistory(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state, 2);
+    const actions = new ActionJournal(ActionJournalMode.Record, state, undefined, 2);
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     state.setPath("foo/bar/baz", 67, "test");
