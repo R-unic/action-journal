@@ -8,12 +8,16 @@ A powerful state management library for Roblox with undo/redo capabilities, acti
 ## Features
 
 - 🎯 **Type-safe** - Full TypeScript support with path-based type inference
-- ⏪ **Undo/Redo** - Built-in undo/redo functionality with action history
 - 📝 **Action Recording** - Automatically records all state changes
-- 🔄 **Synchronization** - Sync actions across multiple state managers
+- 🔄 **Action Replay** - Execute recorded actions on a state manager
+- 🔍 **Action Filtering** - Apply action filters for actions undesirable to record/sync
 - 🎨 **Path-based Updates** - Update nested state using simple path strings
-- 🚀 **Lightweight** - Just one dependency, Lemon Signal
-- 🔒 **Immutability** - State is processed immutably
+- ⏪ **Undo/Redo** - Full undo/redo support with separate action queue
+- 🕒 **Time Travel (Mutating)** - Reset action journal to any point in history, erasing future actions/undos
+- 📸 **Time Travel (Non-mutating)** - Inspect state at any historical timestamp without affecting current state
+- 📊 **History Pruning** - Configurable history size limits
+- ⚡ **Lightweight** - Just one dependency (Lemon Signal)
+- 🔒 **Immutability** - State is processed immutably for predictable behavior
 
 ## Quick Start
 
