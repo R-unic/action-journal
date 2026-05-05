@@ -1,6 +1,6 @@
 import Signal from "@rbxts/lemon-signal";
 
-import type { StateManager } from "./state-manager";
+import { StateManager } from "./state-manager";
 import type { Action } from "./structs";
 
 const { clamp } = math;
@@ -84,6 +84,20 @@ export class ActionJournal<State extends {}> {
 
     actions.push(action);
     this.added.Fire(action);
+  }
+
+  /** **Note:** This function does not mutate the current state or `ActionJournal` at all. Setting `managed` to `true` will return a (new) `StateManager` instead of a `State` object. */
+  public getStateAt(timestamp: number, managed: true): StateManager<State>;
+  public getStateAt(timestamp: number, managed?: false): State;
+  public getStateAt(timestamp: number, managed?: boolean): State | StateManager<State> {
+    const state = new StateManager<State>(this.state.initial);
+    const actions = new ActionJournal(ActionJournalMode.Sync, state);
+    for (const action of this.actions) {
+      if (action.timestamp > timestamp) break;
+      actions.executeAction(action);
+    }
+
+    return managed ? state : state.getState();
   }
 
   /** **Note:** This erases *all* state history occurring after `timestamp`. */
