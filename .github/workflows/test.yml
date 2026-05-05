@@ -39,7 +39,7 @@ jobs:
 
       - name: Report coverage
         continue-on-error: true
-        uses: coverallsapp/github-action@v2.3.4
+        uses: coverallsapp/github-action@v2.3.7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           file: coverage/lcov.info
