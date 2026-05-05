@@ -1,5 +1,6 @@
 import { Assert, Fact } from "@rbxts/runit";
 import { StateManager } from "@rbxts/action-journal";
+import { coverClass } from "./utility";
 
 const TEST_STATE = { foo: { bar: { baz: 69 } } };
 
@@ -7,6 +8,7 @@ class StateManagerTest {
   @Fact
   public invalidPath(): void {
     const state = new StateManager(TEST_STATE);
+    coverClass(state, "StateManager");
     Assert.throws(() => state.getPath("sigma/balls"), "Invalid path: sigma/balls");
   }
 

@@ -1,5 +1,6 @@
 import { Assert, Fact } from "@rbxts/runit";
 import { ActionJournalMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
+import { coverClass } from "./utility";
 
 const TEST_STATE = { foo: { bar: { baz: 69 } } };
 
@@ -38,6 +39,8 @@ class ActionJournalTest {
   public recordsActions(): void {
     const state = new StateManager<TestState>(TEST_STATE);
     const actions = new ActionJournal(ActionJournalMode.Record, state);
+    coverClass(state, "StateManager");
+    coverClass(actions, "ActionJournal");
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     Assert.equal(1337, state.getPath("foo/bar/baz"));
