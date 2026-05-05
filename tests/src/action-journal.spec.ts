@@ -1,4 +1,4 @@
-import { Assert, Fact } from "@rbxts/runit";
+import { Assert, Fact, Theory, InlineData } from "@rbxts/runit";
 import { ActionJournalMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
 
 import { TEST_STATE, type TestState } from "./common";
@@ -124,6 +124,18 @@ class ActionJournalTest {
 
     actions.undoToAction(last);
     Assert.equal(69, state.getPath("foo/bar/baz"));
+  }
+
+  @Fact
+  public invalidTimestampThrows(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    state.setPath("foo/bar/baz", 69420, "test");
+
+    Assert.throws(() => actions.timeTravel(-1), "Invalid timestamp: -1");
+    Assert.throws(() => actions.timeTravel(1e10), "Invalid timestamp: 10000000000");
+    Assert.throws(() => actions.getStateAt(-1), "Invalid timestamp: -1");
+    Assert.throws(() => actions.getStateAt(1e10), "Invalid timestamp: 10000000000");
   }
 
   @Fact

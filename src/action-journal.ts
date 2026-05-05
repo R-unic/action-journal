@@ -91,6 +91,7 @@ export class ActionJournal<State extends {}> {
   public getStateAt(timestamp: number, managed: true): StateManager<State>;
   public getStateAt(timestamp: number, managed?: false): State;
   public getStateAt(timestamp: number, managed?: boolean): State | StateManager<State> {
+    this.validateTimestamp(timestamp);
     const state = new StateManager<State>(this.state.initial);
     const actions = new ActionJournal(ActionJournalMode.Sync, state);
     for (const action of this.actions) {
@@ -107,12 +108,7 @@ export class ActionJournal<State extends {}> {
     const count = actions.size();
     if (count === 0) return;
 
-    const oldest = this.getFirst();
-    const newest = this.getLast();
-    if ((oldest && timestamp < oldest.timestamp) || (newest && timestamp > newest.timestamp)) {
-      return error("Cannot time travel: invalid timestamp")
-    }
-
+    this.validateTimestamp(timestamp);
     const newActions = actions.filter(action => action.timestamp <= timestamp).sort((a, b) => a.timestamp < b.timestamp);
     const newUndoQueue = undoQueue.filter(action => action.timestamp <= timestamp);
     state.setPath("", state.initial, "time-travel");
@@ -178,5 +174,17 @@ export class ActionJournal<State extends {}> {
   private undoDirect(action: Action<State>): void {
     this.state.setPath(action.target, action.oldValue as never, action.author, undefined, false);
     this.undoQueue.push(action);
+  }
+
+  private validateTimestamp(timestamp: number): void {
+    const oldest = this.getFirst();
+    const newest = this.getLast();
+    const invalid = oldest !== undefined
+      && newest !== undefined
+      && (timestamp < oldest.timestamp || newest && timestamp > newest.timestamp);
+
+    if (invalid) {
+      error("Invalid timestamp: " + timestamp, 2);
+    }
   }
 }

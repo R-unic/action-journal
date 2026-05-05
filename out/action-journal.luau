@@ -141,6 +141,7 @@ do
 		self.added:Fire(action)
 	end
 	function ActionJournal:getStateAt(timestamp, managed)
+		self:validateTimestamp(timestamp)
 		local state = StateManager.new(self.state.initial)
 		local actions = ActionJournal.new(1, state)
 		for _, action in self.actions do
@@ -163,11 +164,7 @@ do
 		if count == 0 then
 			return nil
 		end
-		local oldest = self:getFirst()
-		local newest = self:getLast()
-		if (oldest and timestamp < oldest.timestamp) or (newest and timestamp > newest.timestamp) then
-			return error("Cannot time travel: invalid timestamp")
-		end
+		self:validateTimestamp(timestamp)
 		-- ▼ ReadonlyArray.filter ▼
 		local _newValue = {}
 		local _callback = function(action)
@@ -281,6 +278,14 @@ do
 		local _undoQueue = self.undoQueue
 		local _action = action
 		table.insert(_undoQueue, _action)
+	end
+	function ActionJournal:validateTimestamp(timestamp)
+		local oldest = self:getFirst()
+		local newest = self:getLast()
+		local invalid = oldest ~= nil and newest ~= nil and (timestamp < oldest.timestamp or newest and timestamp > newest.timestamp)
+		if invalid then
+			error("Invalid timestamp: " .. tostring(timestamp), 2)
+		end
 	end
 end
 return {

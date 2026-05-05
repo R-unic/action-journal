@@ -38,4 +38,5 @@ export declare class ActionJournal<State extends {}> {
     undo(): void;
     executeAction(action: Action<State>, author?: string, history?: boolean): void;
     private undoDirect;
+    private validateTimestamp;
 }
