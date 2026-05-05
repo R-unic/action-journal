@@ -86,6 +86,33 @@ export class ActionJournal<State extends {}> {
     this.added.Fire(action);
   }
 
+  /** **Note:** This erases *all* state history occurring after `timestamp`. */
+  public timeTravel(timestamp: number, preserveAuthor = true): void {
+    const { state, actions, undoQueue } = this;
+    const count = actions.size();
+    if (count === 0) return;
+
+    const oldest = this.getFirst();
+    const newest = this.getLast();
+    if ((oldest && timestamp < oldest.timestamp) || (newest && timestamp > newest.timestamp)) {
+      return error("Cannot time travel: invalid timestamp")
+    }
+
+    const newActions = actions.filter(action => action.timestamp <= timestamp).sort((a, b) => a.timestamp < b.timestamp);
+    const newUndoQueue = undoQueue.filter(action => action.timestamp <= timestamp);
+    state.setPath("", state.initial, "time-travel");
+    actions.clear();
+    undoQueue.clear();
+
+    for (const action of newActions) {
+      actions.push(action);
+      this.executeAction(action, preserveAuthor ? undefined : "time-travel", false);
+    }
+    for (const action of newUndoQueue) {
+      undoQueue.push(action);
+    }
+  }
+
   public getFirst(offset = 0): Action<State> | undefined {
     return this.actions[clamp(offset, 0, this.actions.size() - 1)];
   }
@@ -97,6 +124,10 @@ export class ActionJournal<State extends {}> {
 
   public getRecorded(): Action<State>[] {
     return this.actions;
+  }
+
+  public getUndoQueue(): Action<State>[] {
+    return this.undoQueue;
   }
 
   public redo(): void {
@@ -125,8 +156,8 @@ export class ActionJournal<State extends {}> {
     this.undoDirect(action);
   }
 
-  public executeAction(action: Action<State>, author = action.author): void {
-    this.state.setPath(action.target, action.newValue as never, author);
+  public executeAction(action: Action<State>, author = action.author, history = true): void {
+    this.state.setPath(action.target, action.newValue as never, author, undefined, history);
   }
 
   private undoDirect(action: Action<State>): void {

@@ -9,13 +9,17 @@ function invalidPath(path: string): never {
 }
 
 export class StateManager<State extends {}> {
+  public readonly initial: State;
+
   private readonly changed = new Signal<
     <Path extends string>(info: StateChangeInfo<State, Path>) => void
   >();
 
   public constructor(
     private state: State
-  ) { }
+  ) {
+    this.initial = state;
+  }
 
   public whenChanged(
     callback: <Path extends string>(info: StateChangeInfo<State, Path>) => void
