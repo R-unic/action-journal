@@ -1,10 +1,10 @@
 {
   "all": true,
   "extension": [
-    ".luau"
+    ".lua"
   ],
   "include": [
-    "out/**/*.luau"
+    "out/**/*.lua"
   ],
   "exclude": [
     "coverage/**",
