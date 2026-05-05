@@ -100,7 +100,7 @@ export class ActionJournal<State extends {}> {
     return managed ? state : state.getState();
   }
 
-  /** **Note:** This erases *all* state history occurring after `timestamp`. */
+  /** **Note:** This erases *all* state history (including undo queue!) occurring after `timestamp`. After execution the `ActionJournal` will reflect the current state it was in at `timestamp`. */
   public timeTravel(timestamp: number, preserveAuthor = true): void {
     const { state, actions, undoQueue } = this;
     const count = actions.size();

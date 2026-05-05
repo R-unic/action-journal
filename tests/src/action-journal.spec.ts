@@ -156,6 +156,24 @@ class ActionJournalTest {
   }
 
   @Fact
+  public getStateAt(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    state.setPath("foo/bar/baz", 420, "test");
+
+    const timestamp = os.clock();
+    state.setPath("foo/bar/baz", 1337, "test");
+    state.setPath("foo/bar/baz", 67, "test");
+    Assert.equal(67, state.getPath("foo/bar/baz"));
+
+    const rawStateBefore = actions.getStateAt(timestamp);
+    Assert.equal(420, rawStateBefore.foo.bar.baz);
+
+    const stateBefore = actions.getStateAt(timestamp, true);
+    Assert.equal(420, stateBefore.getPath("foo/bar/baz"));
+  }
+
+  @Fact
   public getFirst(): void {
     const state = new StateManager<TestState>(TEST_STATE);
     const actions = new ActionJournal(ActionJournalMode.Record, state);
