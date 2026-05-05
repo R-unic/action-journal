@@ -81,7 +81,7 @@ messaging.server.on(Message.SpeedBoost, player => {
   const state = playerStates.get(player);
   if (!state) return;
 
-  state.setPath("speed", 69);
+  state.setPath("speed", 69, "speed-boost");
 });
 
 // client/state.ts
@@ -94,7 +94,10 @@ const state = new StateManager<PlayerState>(initialState);
 const actions = new ActionJournal(ActionJournalMode.Sync, state);
 messaging.client.on(Message.SyncAction, action => actions.add(action));
 
+state.whenPathChanged("speed", ({ author, oldValue, newValue }) => {
+  print(author) // speed-boost
+  print(oldValue) // 10
+  print(newValue) // 69
+});
 messaging.server.emit(Message.SpeedBoost);
-task.wait(1); // wait for server to update state
-print(state.getPath("speed")) // 69
 ```
