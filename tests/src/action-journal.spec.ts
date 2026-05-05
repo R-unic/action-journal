@@ -129,6 +129,33 @@ class ActionJournalTest {
   }
 
   @Fact
+  public timeTravel(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    state.setPath("foo/bar/baz", 420, "test");
+
+    const timestamp = os.clock();
+    state.setPath("foo/bar/baz", 1337, "test");
+    state.setPath("foo/bar/baz", 67, "test");
+    actions.undo();
+
+    Assert.equal(1337, state.getPath("foo/bar/baz"));
+
+    const recorded = actions.getRecorded();
+    const undoQueue = actions.getUndoQueue();
+    Assert.count(2, recorded);
+    Assert.single(undoQueue);
+
+    actions.timeTravel(timestamp);
+
+    const newRecorded = actions.getRecorded();
+    const newUndoQueue = actions.getUndoQueue();
+    Assert.single(newRecorded);
+    Assert.empty(newUndoQueue);
+    Assert.equal(420, state.getPath("foo/bar/baz"));
+  }
+
+  @Fact
   public getFirst(): void {
     const state = new StateManager<TestState>(TEST_STATE);
     const actions = new ActionJournal(ActionJournalMode.Record, state);
