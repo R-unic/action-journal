@@ -1,5 +1,5 @@
 import { Assert, Fact } from "@rbxts/runit";
-import { ActionJournalMode, ActionJournal, StateManager, type Action } from "@rbxts/action-journal";
+import { ActionJournalMode, ActionJournal, StateManager, type Action, ActionFilter } from "@rbxts/action-journal";
 
 const TEST_STATE = { foo: { bar: { baz: 69 } } };
 
@@ -55,6 +55,23 @@ class ActionJournalTest {
     Assert.equal(420, firstChange.newValue);
     Assert.equal(420, secondChange.oldValue);
     Assert.equal(1337, secondChange.newValue);
+  }
+
+  @Fact
+  public filtersRecordedActions(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
+    actions.addFilter(fooFilter);
+
+    state.setPath("foo/bar/baz", 420, "foo");
+    const recorded = actions.getRecorded();
+    Assert.empty(recorded);
+
+    actions.removeFilter(fooFilter);
+    state.setPath("foo/bar/baz", 1337, "foo");
+    const newRecorded = actions.getRecorded();
+    Assert.single(newRecorded);
   }
 
   @Fact
