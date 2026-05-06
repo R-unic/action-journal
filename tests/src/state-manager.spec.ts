@@ -8,6 +8,16 @@ class StateManagerTest {
   public invalidPath(): void {
     const state = new StateManager(TEST_STATE);
     Assert.throws(() => state.getPath("sigma/balls"), "Invalid path: sigma/balls");
+    Assert.throws(() => state.setPath("sigma/balls"), "Invalid path: sigma/balls");
+  }
+
+  @Fact
+  public initial(): void {
+    const state = new StateManager(TEST_STATE);
+    state.setPath("foo/bar/baz", 420, "test");
+    state.setPath("foo/bar/baz", 67, "test");
+    state.setPath("foo/bar/baz", 1337, "test");
+    Assert.equal(69, state.initial.foo.bar.baz);
   }
 
   @Fact
