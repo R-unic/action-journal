@@ -113,8 +113,7 @@ class ActionJournalTest {
     const actions = new ActionJournal(state, { mode: JournalMode.Record, filterMode: FilterMode.All });
     const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
     const weedFilter: ActionFilter<TestState> = ({ newValue }) => typeIs(newValue, "number") && newValue > 420;
-    actions.addFilter(fooFilter);
-    actions.addFilter(weedFilter);
+    actions.addFilter(fooFilter).addFilter(weedFilter);
 
     state.setPath("foo/bar/baz", 1337, "foo");
     state.setPath("foo/bar/baz", 420, "foo");
@@ -128,7 +127,7 @@ class ActionJournalTest {
     actions.removeFilter(weedFilter);
     state.setPath("foo/bar/baz", 1337, "foo");
     const newRecorded = actions.getRecorded();
-    Assert.single(newRecorded);
+    Assert.count(2, newRecorded);
   }
 
   @Fact

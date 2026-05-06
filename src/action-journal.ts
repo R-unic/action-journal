@@ -67,17 +67,17 @@ export class ActionJournal<State extends {}> {
     return this;
   }
 
-  public isFiltered(action: Action<State>, filterMode = DEFAULT_FILTER_MODE): boolean {
+  public isFiltered(action: Action<State>, filterMode = this.getFilterMode()): boolean {
     const filterResults = [...this.filters].map(filter => filter(action));
     switch (filterMode) {
       case FilterMode.Any:
         return filterResults.some(v => v);
       case FilterMode.All:
-        return filterResults.every(v => v);
+        return filterResults.size() === 0 ? false : filterResults.every(v => v);
     }
   }
 
-  public add(action: Action<State>, filterMode = DEFAULT_FILTER_MODE): this {
+  public add(action: Action<State>, filterMode = this.getFilterMode()): this {
     if (this.isFiltered(action, filterMode)) return this;
 
     const { historySize = DEFAULT_HISTORY_SIZE } = this.options;
@@ -199,5 +199,9 @@ export class ActionJournal<State extends {}> {
     if (invalid) {
       error("Invalid timestamp: " + timestamp, 2);
     }
+  }
+
+  private getFilterMode(): FilterMode {
+    return this.options.filterMode ?? DEFAULT_FILTER_MODE;
   }
 }
