@@ -2,7 +2,7 @@
   "name": "@rbxts/action-journal",
   "version": "1.0.1",
   "description": "Record & sync state changes and replay or roll them back ",
-  "author": "me",
+  "author": "runicly",
   "main": "out/init.lua",
   "scripts": {
     "setup-rokit": "rokit trust lune-org/lune && rokit trust rojo-rbx/rojo && rokit install",

@@ -1,7 +1,8 @@
-import { Assert, Fact, Theory, InlineData } from "@rbxts/runit";
+import { Assert, Fact } from "@rbxts/runit";
 import { ActionJournalMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
 
 import { TEST_STATE, type TestState } from "./common";
+import { ActionFilteringMode } from "@rbxts/action-journal/action-journal";
 
 class ActionJournalTest {
   @Fact
@@ -56,17 +57,51 @@ class ActionJournalTest {
   }
 
   @Fact
-  public filtersRecordedActions(): void {
+  public filtersRecordedActions_modeAny(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.Any);
     const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
+    const barFilter: ActionFilter<TestState> = ({ author }) => author === "bar";
     actions.addFilter(fooFilter);
+    actions.addFilter(barFilter);
 
     state.setPath("foo/bar/baz", 420, "foo");
+    state.setPath("foo/bar/baz", 420, "bar");
+    state.setPath("foo/bar/baz", 420, "baz");
     const recorded = actions.getRecorded();
-    Assert.empty(recorded);
+    Assert.single(recorded);
+
+    const [recordedAction] = recorded;
+    Assert.equal("baz", recordedAction.author);
+    Assert.equal(420, recordedAction.newValue);
 
     actions.removeFilter(fooFilter);
+    actions.removeFilter(barFilter);
+    state.setPath("foo/bar/baz", 1337, "foo");
+    state.setPath("foo/bar/baz", 69, "bar");
+    const newRecorded = actions.getRecorded();
+    Assert.count(3, newRecorded);
+  }
+
+  @Fact
+  public filtersRecordedActions_modeAll(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.All);
+    const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
+    const weedFilter: ActionFilter<TestState> = ({ newValue }) => typeIs(newValue, "number") && newValue > 420;
+    actions.addFilter(fooFilter);
+    actions.addFilter(weedFilter);
+
+    state.setPath("foo/bar/baz", 1337, "foo");
+    state.setPath("foo/bar/baz", 420, "foo");
+    const recorded = actions.getRecorded();
+    Assert.single(recorded);
+
+    const [recordedAction] = recorded;
+    Assert.equal(420, recordedAction.newValue);
+
+    actions.removeFilter(fooFilter);
+    actions.removeFilter(weedFilter);
     state.setPath("foo/bar/baz", 1337, "foo");
     const newRecorded = actions.getRecorded();
     Assert.single(newRecorded);
