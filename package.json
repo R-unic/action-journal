@@ -1,6 +1,6 @@
 {
   "name": "@rbxts/action-journal",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Record & sync state changes and replay or roll them back ",
   "author": "runicly",
   "main": "out/init.lua",
