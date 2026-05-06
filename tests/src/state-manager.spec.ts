@@ -48,6 +48,21 @@ class StateManagerTest {
     state.setPath("foo/bar/baz", 420, "test");
     Assert.true(changed);
   }
+
+  @Fact
+  public whenChanged(): void {
+    const state = new StateManager(TEST_STATE);
+    let changed = false;
+    state.whenChanged(({ path, oldValue, newValue }) => {
+      Assert.equal("foo/bar/baz", path);
+      Assert.equal(69, oldValue);
+      Assert.equal(420, newValue);
+      changed = true;
+    });
+
+    state.setPath("foo/bar/baz", 420, "test");
+    Assert.true(changed);
+  }
 }
 
 export = StateManagerTest;
