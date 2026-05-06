@@ -1,7 +1,7 @@
 import type { Action, ResolvedOrUnknown } from "./structs";
 
 export { StateManager } from "./state-manager";
-export { ActionJournal, ActionJournalMode, type ActionFilter } from "./action-journal";
+export { ActionJournal, JournalMode, FilterMode, type ActionFilter } from "./action-journal";
 export type { Action };
 
 export function actionEquals<State extends {}, Path extends string>(

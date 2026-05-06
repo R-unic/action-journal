@@ -4,18 +4,26 @@ import { StateManager } from "./state-manager";
 import type { Action } from "./structs";
 
 const { clamp } = math;
+const DEFAULT_FILTER_MODE = FilterMode.Any;
+const DEFAULT_HISTORY_SIZE = 100;
 
 export type ActionFilter<State extends {}, Path extends string = string> =
   (action: Action<State, Path>) => boolean;
 
-export const enum ActionJournalMode {
+export const enum JournalMode {
   Record,
   Sync
 }
 
-export const enum ActionFilteringMode {
+export const enum FilterMode {
   Any,
   All
+}
+
+export interface ActionJournalOptions {
+  readonly mode: JournalMode;
+  readonly filterMode?: FilterMode;
+  readonly historySize?: number;
 }
 
 export class ActionJournal<State extends {}> {
@@ -26,13 +34,11 @@ export class ActionJournal<State extends {}> {
   private readonly filters = new Set<ActionFilter<State>>;
 
   public constructor(
-    mode: ActionJournalMode,
     private readonly state: StateManager<State>,
-    private readonly filteringMode = ActionFilteringMode.Any,
-    private readonly historySize = 100
+    private readonly options: ActionJournalOptions
   ) {
-    switch (mode) {
-      case ActionJournalMode.Record: {
+    switch (options.mode) {
+      case JournalMode.Record: {
         state.whenChanged(({ author, path, oldValue, newValue }) =>
           this.add({
             timestamp: os.clock(),
@@ -44,36 +50,39 @@ export class ActionJournal<State extends {}> {
         );
         break;
       }
-      case ActionJournalMode.Sync: {
+      case JournalMode.Sync: {
         this.added.Connect((action) => this.executeAction(action));
         break;
       }
     }
   }
 
-  public addFilter(filter: ActionFilter<State>): void {
+  public addFilter(filter: ActionFilter<State>): this {
     this.filters.add(filter);
+    return this;
   }
 
-  public removeFilter(filter: ActionFilter<State>): void {
+  public removeFilter(filter: ActionFilter<State>): this {
     this.filters.delete(filter);
+    return this;
   }
 
-  public isFiltered(action: Action<State>, filteringMode = this.filteringMode): boolean {
+  public isFiltered(action: Action<State>, filterMode = DEFAULT_FILTER_MODE): boolean {
     const filterResults = [...this.filters].map(filter => filter(action));
-    switch (filteringMode) {
-      case ActionFilteringMode.Any:
+    switch (filterMode) {
+      case FilterMode.Any:
         return filterResults.some(v => v);
-      case ActionFilteringMode.All:
+      case FilterMode.All:
         return filterResults.every(v => v);
     }
   }
 
-  public add(action: Action<State>, filteringMode = this.filteringMode): void {
-    if (this.isFiltered(action, filteringMode)) return;
+  public add(action: Action<State>, filterMode = DEFAULT_FILTER_MODE): this {
+    if (this.isFiltered(action, filterMode)) return this;
 
+    const { historySize = DEFAULT_HISTORY_SIZE } = this.options;
     const { actions } = this;
-    if (actions.size() >= this.historySize) {
+    if (actions.size() >= historySize) {
       const oldest = actions.shift();
       if (oldest) {
         const index = this.undoQueue.indexOf(oldest);
@@ -85,6 +94,7 @@ export class ActionJournal<State extends {}> {
 
     actions.push(action);
     this.added.Fire(action);
+    return this;
   }
 
   /** **Note:** This function does not mutate the current state or `ActionJournal` at all. Setting `managed` to `true` will return a (new) `StateManager` instead of a `State` object. */
@@ -93,7 +103,7 @@ export class ActionJournal<State extends {}> {
   public getStateAt(timestamp: number, managed?: boolean): State | StateManager<State> {
     this.validateTimestamp(timestamp);
     const state = new StateManager<State>(this.state.initial);
-    const actions = new ActionJournal(ActionJournalMode.Sync, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Sync });
     for (const action of this.actions) {
       if (action.timestamp > timestamp) break;
       actions.executeAction(action);
@@ -141,34 +151,37 @@ export class ActionJournal<State extends {}> {
     return this.undoQueue;
   }
 
-  public redo(): void {
+  public redo(): this {
     const action = this.undoQueue.pop();
-    if (!action) return;
+    if (!action) return this;
 
-    this.executeAction(action);
+    return this.executeAction(action);
   }
 
-  public undoNewerThan(timestamp: number): void {
+  public undoNewerThan(timestamp: number): this {
     for (const i of $range(this.actions.size() - 1, 0, -1)) {
       const action = this.actions[i];
       if (action.timestamp < timestamp) continue;
       this.undoDirect(action);
     }
+    return this;
   }
 
-  public undoToAction(action: Action<State>): void {
-    this.undoNewerThan(action.timestamp);
+  public undoToAction(action: Action<State>): this {
+    return this.undoNewerThan(action.timestamp);
   }
 
-  public undo(): void {
+  public undo(): this {
     const action = this.actions.pop();
-    if (!action) return;
+    if (!action) return this;
 
     this.undoDirect(action);
+    return this;
   }
 
-  public executeAction(action: Action<State>, author = action.author, history = true): void {
+  public executeAction(action: Action<State>, author = action.author, history = true): this {
     this.state.setPath(action.target, action.newValue as never, author, undefined, history);
+    return this;
   }
 
   private undoDirect(action: Action<State>): void {

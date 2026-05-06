@@ -1,14 +1,13 @@
 import { Assert, Fact } from "@rbxts/runit";
-import { ActionJournalMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
+import { JournalMode, FilterMode, ActionJournal, StateManager, type Action, type ActionFilter } from "@rbxts/action-journal";
 
 import { TEST_STATE, type TestState } from "./common";
-import { ActionFilteringMode } from "@rbxts/action-journal/action-journal";
 
 class ActionJournalTest {
   @Fact
   public syncsActions(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Sync, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Sync });
     const actionQueue: Action<TestState>[] = [
       {
         timestamp: 0,
@@ -36,7 +35,7 @@ class ActionJournalTest {
   @Fact
   public recordsActions(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     Assert.equal(1337, state.getPath("foo/bar/baz"));
@@ -59,7 +58,7 @@ class ActionJournalTest {
   @Fact
   public isFiltered(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.Any);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record, filterMode: FilterMode.Any });
     const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
     actions.addFilter(fooFilter);
 
@@ -83,13 +82,12 @@ class ActionJournalTest {
   }
 
   @Fact
-  public filtersRecordedActions_modeAny(): void {
+  public filtersActions_modeAny(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.Any);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record, filterMode: FilterMode.Any });
     const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
     const barFilter: ActionFilter<TestState> = ({ author }) => author === "bar";
-    actions.addFilter(fooFilter);
-    actions.addFilter(barFilter);
+    actions.addFilter(fooFilter).addFilter(barFilter);
 
     state.setPath("foo/bar/baz", 420, "foo");
     state.setPath("foo/bar/baz", 420, "bar");
@@ -110,9 +108,9 @@ class ActionJournalTest {
   }
 
   @Fact
-  public filtersRecordedActions_modeAll(): void {
+  public filtersActions_modeAll(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.All);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record, filterMode: FilterMode.All });
     const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
     const weedFilter: ActionFilter<TestState> = ({ newValue }) => typeIs(newValue, "number") && newValue > 420;
     actions.addFilter(fooFilter);
@@ -136,7 +134,7 @@ class ActionJournalTest {
   @Fact
   public cyclicHistory(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state, undefined, 2);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record, historySize: 2 });
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     state.setPath("foo/bar/baz", 67, "test");
@@ -160,7 +158,7 @@ class ActionJournalTest {
   @Fact
   public undoAction_redoAction(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
     Assert.equal(420, state.getPath("foo/bar/baz"));
 
@@ -174,7 +172,7 @@ class ActionJournalTest {
   @Fact
   public undoToAction(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     state.setPath("foo/bar/baz", 67, "test");
@@ -190,7 +188,7 @@ class ActionJournalTest {
   @Fact
   public invalidTimestampThrows(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 69420, "test");
 
     Assert.throws(() => actions.timeTravel(-1), "Invalid timestamp: -1");
@@ -202,7 +200,7 @@ class ActionJournalTest {
   @Fact
   public timeTravel(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
 
     const timestamp = os.clock();
@@ -229,7 +227,7 @@ class ActionJournalTest {
   @Fact
   public getStateAt(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
 
     const timestamp = os.clock();
@@ -247,7 +245,7 @@ class ActionJournalTest {
   @Fact
   public getFirst(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     state.setPath("foo/bar/baz", 67, "test");
@@ -266,7 +264,7 @@ class ActionJournalTest {
   @Fact
   public getLast(): void {
     const state = new StateManager<TestState>(TEST_STATE);
-    const actions = new ActionJournal(ActionJournalMode.Record, state);
+    const actions = new ActionJournal(state, { mode: JournalMode.Record });
     state.setPath("foo/bar/baz", 420, "test");
     state.setPath("foo/bar/baz", 1337, "test");
     state.setPath("foo/bar/baz", 67, "test");

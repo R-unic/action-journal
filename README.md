@@ -22,7 +22,7 @@ A powerful state management library for Roblox with undo/redo capabilities, acti
 ## Quick Start
 
 ```ts
-import { StateManager, ActionJournal, ActionJournalMode } from "@rbxts/action-journal";
+import { StateManager, ActionJournal, JournalMode } from "@rbxts/action-journal";
 
 // all data is immutable
 interface GameState {
@@ -37,7 +37,7 @@ interface GameState {
   readonly score: number;
 }
 
-const stateManager = new StateManager({
+const state = new StateManager<GameState>({
   player: {
     health: 100,
     position: { x: 0, y: 0 },
@@ -46,13 +46,13 @@ const stateManager = new StateManager({
   score: 0
 });
 
-const actions = new ActionJournal(ActionJournalMode.Record, stateManager);
-stateManager.setPath("player/health", 80, "damage_system"); // each state change requires an author
-stateManager.setPath("score", 100, "score_system");
-stateManager.setPath("player/position/x", 10, "position_system");
+const actions = new ActionJournal(state, { mode: JournalMode.Record });
+state.setPath("player/health", 80, "damage_system"); // each state change requires an author
+state.setPath("score", 100, "score_system");
+state.setPath("player/position/x", 10, "position_system");
 
 actions.undo(); // player/position/x reverts to 0
-actions.redo(); // player/position/x returns to 10
+       .redo(); // player/position/x returns to 10
 ```
 
 ## Syncing Client/Server State
@@ -68,14 +68,14 @@ export interface PlayerState {
 }
 
 // server/state.ts
-import { StateManager, ActionJournal, ActionJournalMode } from "@rbxts/action-journal";
+import { StateManager, ActionJournal, JournalMode } from "@rbxts/action-journal";
 
 import { initialState, type PlayerState } from "shared/state";
 
 const playerStates = new Map<Player, PlayerState>();
 Players.PlayerAdded.Connect(player => {
   const state = new StateManager<PlayerState>(initialState);
-  const actions = new ActionJournal(ActionJournalMode.Record, state);
+  const actions = new ActionJournal(state, { mode: JournalMode.Record });
   actions.added.Connect(action => messaging.client.emit(player, Message.SyncAction, action)); // your networking library - tether as an example
 
   playerStates.set(player, state);
@@ -90,12 +90,12 @@ messaging.server.on(Message.SpeedBoost, player => {
 
 // client/state.ts
 
-import { StateManager, ActionJournal, ActionJournalMode } from "@rbxts/action-journal";
+import { StateManager, ActionJournal, JournalMode } from "@rbxts/action-journal";
 
 import { initialState, type PlayerState } from "shared/state";
 
 const state = new StateManager<PlayerState>(initialState);
-const actions = new ActionJournal(ActionJournalMode.Sync, state);
+const actions = new ActionJournal(state, { mode: JournalMode.Sync });
 messaging.client.on(Message.SyncAction, action => actions.add(action));
 
 state.whenPathChanged("speed", ({ author, oldValue, newValue }) => {
@@ -104,4 +104,27 @@ state.whenPathChanged("speed", ({ author, oldValue, newValue }) => {
   print(newValue) // 69
 });
 messaging.server.emit(Message.SpeedBoost);
+```
+
+## Action Filtering
+
+```ts
+import { StateManager, ActionJournal, JournalMode, FilterMode } from "@rbxts/action-journal";
+
+interface State {
+  readonly coins: number;
+  readonly score: number;
+}
+
+const state = new StateManager<State>({ coins: 0, score: 0 });
+const actions = new ActionJournal(state, { mode: JournalMode.Record, filterMode: FilterMode.Any }); // this is the default filtering mode
+actions.addFilter(action => action.target === "score") // do not record any state changes targeting "score"
+       .addFilter(action => action.author === "bar"); // do not record any state changes authored by "bar"
+
+state.setPath("score", 69, "foo");
+state.setPath("coins", 100, "foo");
+state.setPath("coins", 200, "bar");
+
+print(state.getState()) // { coins = 200, score = 69 }
+print(actions.getRecorded().size()) // 1, only recorded the change to 100 coins (not authored by "bar", not changing "score")
 ```
