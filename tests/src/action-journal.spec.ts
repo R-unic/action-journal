@@ -57,6 +57,32 @@ class ActionJournalTest {
   }
 
   @Fact
+  public isFiltered(): void {
+    const state = new StateManager<TestState>(TEST_STATE);
+    const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.Any);
+    const fooFilter: ActionFilter<TestState> = ({ author }) => author === "foo";
+    actions.addFilter(fooFilter);
+
+    const action: Action<TestState> = {
+      timestamp: 0,
+      target: "foo/bar/baz",
+      author: "test",
+      oldValue: 69,
+      newValue: 420
+    };
+    const fooAction: Action<TestState> = {
+      timestamp: 1,
+      target: "foo/bar/baz",
+      author: "foo",
+      oldValue: 420,
+      newValue: 1337
+    };
+
+    Assert.false(actions.isFiltered(action));
+    Assert.true(actions.isFiltered(fooAction));
+  }
+
+  @Fact
   public filtersRecordedActions_modeAny(): void {
     const state = new StateManager<TestState>(TEST_STATE);
     const actions = new ActionJournal(ActionJournalMode.Record, state, ActionFilteringMode.Any);

@@ -8,7 +8,7 @@ class StateManagerTest {
   public invalidPath(): void {
     const state = new StateManager(TEST_STATE);
     Assert.throws(() => state.getPath("sigma/balls"), "Invalid path: sigma/balls");
-    Assert.throws(() => state.setPath("sigma/balls"), "Invalid path: sigma/balls");
+    Assert.throws(() => state.setPath("sigma/balls", 69 as never, "test"), "Invalid path: sigma/balls");
   }
 
   @Fact
