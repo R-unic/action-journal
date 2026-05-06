@@ -49,13 +49,16 @@ class StateManagerTest {
   public whenPathChanged(): void {
     const state = new StateManager(TEST_STATE);
     let changed = false;
-    state.whenPathChanged("foo/bar/baz", ({ oldValue, newValue }) => {
+    const disconnect = state.whenPathChanged("foo/bar/baz", ({ oldValue, newValue }) => {
       Assert.equal(69, oldValue);
       Assert.equal(420, newValue);
-      changed = true;
+      changed = !changed;
     });
 
     state.setPath("foo/bar/baz", 420, "test");
+    state.setPath("foo/bar", { baz: 67 }, "test");
+    disconnect();
+    state.setPath("foo/bar/baz", 1337, "test");
     Assert.true(changed);
   }
 
@@ -63,14 +66,16 @@ class StateManagerTest {
   public whenChanged(): void {
     const state = new StateManager(TEST_STATE);
     let changed = false;
-    state.whenChanged(({ path, oldValue, newValue }) => {
+    const disconnect = state.whenChanged(({ path, oldValue, newValue }) => {
       Assert.equal("foo/bar/baz", path);
       Assert.equal(69, oldValue);
       Assert.equal(420, newValue);
-      changed = true;
+      changed = !changed;
     });
 
     state.setPath("foo/bar/baz", 420, "test");
+    disconnect();
+    state.setPath("foo/bar/baz", 1337, "test");
     Assert.true(changed);
   }
 }
