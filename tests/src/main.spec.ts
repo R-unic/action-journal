@@ -29,6 +29,7 @@ class MainTest {
 
     Assert.false(a === b); // same shape, different memory
     Assert.true(actionEquals(a, b));
+    Assert.true(actionEquals(a, b, (x, y) => x === y));
   }
 }
 
