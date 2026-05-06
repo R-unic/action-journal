@@ -53,13 +53,14 @@ export class StateManager<State extends {}> {
     }
 
     const parts = path.split(PATH_SEPARATOR);
-    const field = parts.pop(); 1
-    if (field === undefined)
-      return invalidPath(path);
+    const field = parts.pop();
 
     const objectPath = parts.join(PATH_SEPARATOR);
     const object = this.getPath(objectPath);
-    const oldValue = object[field as never];
+    if (field === undefined || object === undefined)
+      return invalidPath(path);
+
+    const oldValue = object![field as never];
     const newObject = { ...object, [field]: value };
     this.setPath(objectPath, newObject, author, initialPath);
 
